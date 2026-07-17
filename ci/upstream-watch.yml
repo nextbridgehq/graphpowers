@@ -1,0 +1,132 @@
+# Graphpowers upstream watch — lives in THIS repo at
+# .github/workflows/upstream-watch.yml (copy it there when publishing).
+#
+# Weekly canary against the LATEST upstream releases:
+#   1. Install latest graphify, build a graph on a tiny fixture project,
+#      run our full test suite AND every bridge command against that
+#      real, freshly-generated graph (exercises the schema guard).
+#   2. Clone latest Superpowers; verify every skill we reference still
+#      exists and the hook convention is unchanged (upstream-check).
+#   3. On any failure, open (or update) a GitHub issue automatically.
+#
+# Philosophy (docs/DESIGN.md): we monitor contracts, not code. Nothing
+# is auto-merged from upstream — a failure produces an issue for a human.
+
+name: Upstream watch
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        graphify-version: ["latest"]  # add pinned version when known, e.g. ["0.9.0", "latest"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install graphify (${{ matrix.graphify-version }})
+        id: gfy
+        run: |
+          if [ "${{ matrix.graphify-version }}" = "latest" ]; then
+            pip install graphify
+          else
+            pip install "graphify==${{ matrix.graphify-version }}"
+          fi
+          echo "version=$(pip show graphify | awk '/^Version:/{print $2}')" >> "$GITHUB_OUTPUT"
+          graphify --help > graphify-help.txt
+
+      - name: Build a real graph on a fixture project
+        run: |
+          mkdir -p /tmp/fixture/src && cd /tmp/fixture
+          cat > src/db.py <<'PY'
+          def query(sql):
+              return []
+          PY
+          cat > src/auth.py <<'PY'
+          from src.db import query
+
+          def login(user):
+              return query("select 1")
+          PY
+          cat > src/app.py <<'PY'
+          from src.auth import login
+
+          def main():
+              login("root")
+          PY
+          git init -q && git add -A && git -c user.email=ci@x -c user.name=ci commit -qm fixture
+          graphify . --no-viz
+          test -f graphify-out/graph.json
+
+      - name: Run test suite
+        run: python3 tests/run_tests.py
+
+      - name: Run every bridge command against the real graph
+        working-directory: /tmp/fixture
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE"
+          python3 -m bridge freshness
+          python3 -m bridge blast src/auth.py --depth 2
+          python3 -m bridge pack "change login flow" --file src/auth.py
+          python3 -m bridge who-uses login
+          python3 -m bridge snapshot --out /tmp/before.json
+          touch src/extra.py && git add -A
+          graphify . --update --no-viz || graphify . --no-viz
+          python3 -m bridge drift /tmp/before.json graphify-out/graph.json || test $? -eq 2
+
+      - name: Clone LATEST superpowers
+        run: git clone --depth 1 https://github.com/obra/superpowers /tmp/superpowers
+
+      - name: Upstream contract check
+        run: |
+          PYTHONPATH="$GITHUB_WORKSPACE" python3 -m bridge upstream-check \
+            --superpowers /tmp/superpowers \
+            --graphify-help graphify-help.txt \
+            --also ci --also docs | tee upstream-report.md
+
+      - name: Open issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const gfyVersion = '${{ steps.gfy.outputs.version }}' || 'unknown';
+            let report = '';
+            try { report = fs.readFileSync('upstream-report.md', 'utf8'); } catch {}
+            const matrix = '${{ matrix.graphify-version }}';
+            const isPin = matrix !== 'latest';
+            const urgency = isPin ? '🔴 PINNED' : '🟡 CANARY';
+            const title = urgency + ' upstream watch failed (graphify ' + gfyVersion + ')';
+            const label = 'upstream-watch';
+            const body = [
+              'The weekly upstream canary failed.',
+              '',
+              '- graphify version tested: `' + gfyVersion + '`',
+              '- run: ' + context.serverUrl + '/' + context.repo.owner + '/' +
+                context.repo.repo + '/actions/runs/' + context.runId,
+              '',
+              report ? '## Contract report\n\n' + report.slice(0, 50000)
+                     : '_Failure occurred before the contract report step; see the run logs._'
+            ].join('\n');
+            const { data: open } = await github.rest.issues.listForRepo({
+              ...context.repo, state: 'open', labels: label });
+            if (open.length) {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: open[0].number, body });
+            } else {
+              await github.rest.issues.create({
+                ...context.repo, title, body, labels: [label] });
+            }

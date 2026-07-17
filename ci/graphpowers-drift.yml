@@ -1,0 +1,95 @@
+# Graphpowers drift gate — copy this file into YOUR repo at
+# .github/workflows/graphpowers-drift.yml
+#
+# On every PR it builds the knowledge graph for the base branch and the PR
+# head, diffs them with `bridge drift`, posts the report as a PR comment,
+# and (optionally) fails the check when drift needs review.
+#
+# Requirements in your repo:
+#   - graphify installable in CI (pip install graphify, or your fork)
+#   - graphpowers vendored at .graphpowers/ (or adjust GRAPHPOWERS_DIR)
+#
+# Tune-ables:
+#   GATE_MODE: "warn" = always green, comment only (recommended to start)
+#              "block" = fail the check on drift verdict REVIEW NEEDED
+
+name: Graphpowers drift gate
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  GATE_MODE: warn
+  GRAPHPOWERS_DIR: .graphpowers
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head (full history for base worktree)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install graphify
+        run: pip install graphify
+        # Deterministic tree-sitter extraction needs no API key.
+        # If you use --mode deep, add your LLM key as a repo secret here.
+
+      - name: Build BASE graph (in a worktree, so PR files are untouched)
+        run: |
+          git worktree add ../base "origin/${{ github.base_ref }}"
+          cd ../base
+          graphify . --no-viz
+          cp graphify-out/graph.json "$GITHUB_WORKSPACE/base-graph.json"
+
+      - name: Build HEAD graph
+        run: |
+          graphify . --no-viz
+          cp graphify-out/graph.json head-graph.json
+
+      - name: Run drift check
+        id: drift
+        run: |
+          set +e
+          PYTHONPATH="$GRAPHPOWERS_DIR" python3 -m bridge drift \
+            base-graph.json head-graph.json | tee drift-report.md
+          code=$?
+          set -e
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          # exit 2 = drift flagged (not an error); anything else >0 is real
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then exit "$code"; fi
+
+      - name: Comment drift report on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('drift-report.md', 'utf8');
+            const marker = '<!-- graphpowers-drift -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo, issue_number: context.issue.number });
+            const prev = comments.find(c => c.body.includes(marker));
+            const payload = { ...context.repo,
+              body: marker + '\n' + body.slice(0, 60000) };
+            if (prev) {
+              await github.rest.issues.updateComment({ ...payload, comment_id: prev.id });
+            } else {
+              await github.rest.issues.createComment({ ...payload, issue_number: context.issue.number });
+            }
+
+      - name: Gate
+        if: env.GATE_MODE == 'block' && steps.drift.outputs.exit_code == '2'
+        run: |
+          echo "Architecture drift needs review — see the PR comment."
+          exit 1

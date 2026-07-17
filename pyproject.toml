@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graphpowers"
+version = "0.1.0"
+description = "Graph-aware Superpowers: wires graphify's knowledge graph into the Superpowers development methodology."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+]
+# Deliberately zero runtime dependencies (stdlib only).
+dependencies = []
+
+[project.scripts]
+graphpowers = "bridge.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/nextbridgehq/graphpowers"
+
+[tool.setuptools]
+packages = ["bridge"]

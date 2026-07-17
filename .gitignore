@@ -1,0 +1,24 @@
+# Cache and environment
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.eggs/
+*.egg-info/
+coverage/
+
+# Output and data
+graphify-out/
+graphpowers-data/
+
+# Local tooling metadata (not part of the published plugin)
+.repocode/
+
+# Do not commit superpower docs
+docs/superpowers/*
+

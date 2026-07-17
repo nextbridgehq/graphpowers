@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# SessionStart hook for graphpowers: inject using-graphpowers skill +
+# a live graph freshness status line for the current repo.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+skill_content=$(cat "${PLUGIN_ROOT}/skills/using-graphpowers/SKILL.md" 2>&1 || echo "Error reading using-graphpowers skill")
+
+# Live status: does this repo have a graph, and is it fresh?
+if ! command -v graphify >/dev/null 2>&1; then
+  graph_status="graphify is not installed. Install it (pip install graphify) to build a knowledge graph for this repo."
+elif [ -f "graphify-out/graph.json" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    graph_status=$(PYTHONPATH="${PLUGIN_ROOT}" python3 -m bridge freshness 2>/dev/null || true)
+    [ -z "$graph_status" ] && graph_status="graphify-out/graph.json exists (freshness check unavailable)."
+  else
+    graph_status="graphify-out/graph.json exists (python3 not found; cannot check freshness)."
+  fi
+else
+  graph_status="graphify is installed but no graph exists for this repo. Run 'graphify .' to build one."
+fi
+
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+skill_escaped=$(escape_for_json "$skill_content")
+status_escaped=$(escape_for_json "$graph_status")
+session_context="<IMPORTANT>\nGraph status: ${status_escaped}\n\nBelow is your 'graphpowers:using-graphpowers' skill - how the knowledge graph plugs into your development process. Invoke the other graphpowers skills with the Skill tool:\n\n${skill_escaped}\n</IMPORTANT>"
+
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  printf '{\n  "additional_context": "%s"\n}\n' "$session_context" | cat
+else
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context" | cat
+fi
