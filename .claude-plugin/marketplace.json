@@ -1,0 +1,18 @@
+{
+  "name": "graphpowers-marketplace",
+  "owner": {
+    "name": "Nextbridge"
+  },
+  "description": "A collection of orchestration tools and plugins that combine Superpowers workflows with Graphify's queryable knowledge graph for your coding agent.",
+  "plugins": [
+    {
+      "name": "graphpowers",
+      "source": "./",
+      "description": "Graph-aware orchestration for AI coding agents. Combines Superpowers workflows with Graphify's knowledge graph for context-aware software development.",
+      "author": {
+        "name": "Nextbridge"
+      },
+      "homepage": "https://github.com/nextbridgehq/graphpowers#readme"
+    }
+  ]
+}
