@@ -6,3 +6,4 @@
     "name": "Nextbridge"
   },
   "hooks": "./hooks/hooks.json"
+}
