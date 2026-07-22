@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2026-07-22
 
+### Added
+- `AGENTS.md` — shared conventions for AI coding agents working in this repo (changelog format, commit conventions, release-please-owned version files, graph relation semantics, testing conventions, and more)
+- `CLAUDE.md` and `GEMINI.md` — tool-specific entry points pointing to `AGENTS.md`
+
 ### Fixed
 - God nodes now ranked by impact-only degree, not raw edge count — structural edges like `contains` no longer inflate a node into a false god node
 - `who-uses` now resolves file-path lookups via the graph file index, not just node labels/ids
