@@ -43,6 +43,22 @@ When updating `CHANGELOG.md`:
   fixes into one commit produces a single muddy changelog line instead
   of several clean ones.
 
+## Local commits only — never push or open a PR unannounced
+
+- Committing to a local branch is normal working state — do it freely,
+  without asking each time.
+- **Never push to the remote (`origin`) and never open a pull request
+  unless the current instruction explicitly and specifically asks for
+  that push/PR.** Being told to "commit," "finish the fix," or "wrap up
+  the branch" is not authorization to push — those mean commit locally
+  and stop.
+- This holds even once work is complete and tests pass. "Ready to
+  push" and "push it" are different instructions; wait for the second
+  one.
+- Prior approval to push or open a PR does not carry forward to later
+  work in the same session — a separate task needs a separate,
+  explicit go-ahead.
+
 ## Version files are release-please-owned
 
 `pyproject.toml`'s `version`, `.claude-plugin/plugin.json`'s `version`,
