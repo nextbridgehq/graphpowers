@@ -117,6 +117,7 @@ class Graph:
     _adj: Optional[dict[str, list[Edge]]] = None
     _by_file: Optional[dict[str, list[str]]] = None
     _degree: Optional[dict[str, int]] = None
+    _impact_degree: Optional[dict[str, int]] = None
 
     # ---------- construction ----------
 
@@ -191,6 +192,23 @@ class Graph:
             self._degree = dict(deg)
         return self._degree
 
+    @property
+    def impact_degree(self) -> dict[str, int]:
+        """Degree counting only IMPACT_RELATIONS edges — excludes
+        structural-only edges (contains, defines, declares, documents)
+        so a node isn't ranked a god node merely for containing a lot
+        of code."""
+        if self._impact_degree is None:
+            deg: dict[str, int] = defaultdict(int)
+            for e in self.edges:
+                if e.relation in IMPACT_RELATIONS:
+                    deg[e.source] += 1
+                    deg[e.target] += 1
+            for nid in self.nodes:
+                deg.setdefault(nid, 0)
+            self._impact_degree = dict(deg)
+        return self._impact_degree
+
     # ---------- helpers ----------
 
     def label(self, node_id: str) -> str:
@@ -218,17 +236,22 @@ class Graph:
 
     def god_nodes(self, top_n: int = 10,
                   min_degree: int | None = None) -> list[tuple[str, int]]:
-        """Highest-degree nodes — the load-bearing walls of the codebase.
+        """Highest-impact-degree nodes — the load-bearing walls of the
+        codebase.
 
-        A node only qualifies if its degree is at least ``min_degree``
-        (default: 2× the mean degree, floor 4) so that tiny graphs don't
-        flag every node as load-bearing.
+        Ranked by ``impact_degree`` (calls/imports/inherits/... only) so
+        that structural containment (a file `contains` many functions)
+        doesn't by itself make a node a god node.
+
+        A node only qualifies if its impact degree is at least
+        ``min_degree`` (default: 2× the mean impact degree, floor 4) so
+        that tiny graphs don't flag every node as load-bearing.
         """
+        deg = self.impact_degree
         if min_degree is None:
-            mean = (sum(self.degree.values()) / len(self.degree)
-                    if self.degree else 0)
+            mean = sum(deg.values()) / len(deg) if deg else 0
             min_degree = max(4, int(mean * 2))
-        ranked = sorted(self.degree.items(), key=lambda kv: (-kv[1], kv[0]))
+        ranked = sorted(deg.items(), key=lambda kv: (-kv[1], kv[0]))
         return [(nid, d) for nid, d in ranked[:top_n] if d >= min_degree]
 
     def nodes_for_files(self, files: Iterable[str | Path]) -> list[str]:

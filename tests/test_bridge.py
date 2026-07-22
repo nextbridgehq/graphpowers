@@ -55,6 +55,39 @@ def test_load_and_indexes():
     assert "query" in g.nodes_for_files(["db.py"])
 
 
+def test_god_nodes_ignore_structural_edges():
+    raw = {
+        "directed": False,
+        "nodes": [
+            {"id": "structural_hub", "label": "structural_hub",
+             "source_file": "src/hub.py", "community": 0},
+            {"id": "real_hub", "label": "real_hub",
+             "source_file": "src/real.py", "community": 0},
+        ] + [
+            {"id": f"leaf{i}", "label": f"leaf{i}",
+             "source_file": f"src/leaf{i}.py", "community": 0}
+            for i in range(6)
+        ],
+        "links": (
+            [{"source": "structural_hub", "target": f"leaf{i}",
+              "relation": "contains", "confidence": "EXTRACTED"}
+             for i in range(3)]
+            + [{"source": "real_hub", "target": f"leaf{i}",
+                "relation": "calls", "confidence": "EXTRACTED"}
+               for i in range(3, 6)]
+        ),
+    }
+    g = Graph.from_node_link(raw)
+    # raw degree can't tell them apart
+    assert g.degree["structural_hub"] == g.degree["real_hub"] == 3
+    # impact degree does
+    assert g.impact_degree["structural_hub"] == 0
+    assert g.impact_degree["real_hub"] == 3
+    gods = {nid for nid, _ in g.god_nodes(min_degree=2)}
+    assert "real_hub" in gods
+    assert "structural_hub" not in gods
+
+
 def test_blast_radius():
     g = graph()
     rep = br.blast_radius(g, ["src/auth.py"], max_depth=2)
