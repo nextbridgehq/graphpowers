@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `who-uses` now resolves file-path lookups via the graph file index, not just node labels/ids
 - `hooks/session-start` tracked as executable in git (was `100644` despite being executable locally, which a fresh clone would not preserve)
 - Freshness checks now detect newly created untracked files instead of reporting the graph as fresh
+- `drift` now displays impact degree (not raw edge count) for new god nodes, so the printed before/after numbers match what actually triggered the flag
 
 ## [0.1.0] - 2026-07-17
 
