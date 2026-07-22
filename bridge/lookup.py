@@ -23,8 +23,10 @@ class UsageReport:
 
 
 def find_node(graph: Graph, term: str) -> tuple[str | None, list[str]]:
-    """Best node match for a label term. Exact (casefolded) wins, then
-    substring matches ordered by degree (most-connected first)."""
+    """Best node match for a label term or source-file path. Exact label
+    (casefolded) wins, then substring label matches, then a source-file
+    path match — ordered by degree (most-connected first) within each
+    tier."""
     t = term.casefold().strip()
     exact: list[str] = []
     partial: list[str] = []
@@ -36,6 +38,8 @@ def find_node(graph: Graph, term: str) -> tuple[str | None, list[str]]:
         elif t in label:
             partial.append(nid)
     pool = exact or partial
+    if not pool:
+        pool = graph.nodes_for_files([term])
     pool.sort(key=lambda n: (-graph.degree.get(n, 0), n))
     if not pool:
         return None, []

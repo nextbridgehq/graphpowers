@@ -229,6 +229,13 @@ def test_who_uses_no_match():
     assert "No node matching" in lookup.render_markdown(g, rep)
 
 
+def test_who_uses_by_file_path():
+    from bridge import lookup
+    g = graph()
+    rep = lookup.who_uses(g, "src/db.py")
+    assert rep.matched_node in ("db.py", "query")
+
+
 def test_schema_guard_rejects_garbage(tmp_path):
     from bridge.graphio import GraphSchemaError, validate_node_link
     for bad in ([1, 2, 3], {"foo": "bar"}, {"nodes": "not-a-list"},
