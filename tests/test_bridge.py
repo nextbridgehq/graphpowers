@@ -1,10 +1,13 @@
 import copy
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 from bridge.graphio import Graph
 from bridge import blast_radius as br
@@ -234,6 +237,23 @@ def test_who_uses_by_file_path():
     g = graph()
     rep = lookup.who_uses(g, "src/db.py")
     assert rep.matched_node in ("db.py", "query")
+
+
+def test_hooks_session_start_is_executable():
+    """hooks.json invokes this file directly (no `bash` wrapper), so the
+    git-tracked mode must be executable or a fresh POSIX clone can't run
+    it — checking the working-tree file's OS permission bit isn't enough,
+    since it can be executable locally while the committed index entry
+    (what a fresh clone actually gets) is still 100644."""
+    result = subprocess.run(
+        ["git", "ls-files", "-s", "hooks/session-start"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+    )
+    mode = result.stdout.split()[0]
+    assert mode == "100755", (
+        f"hooks/session-start is tracked with mode {mode}, not 100755 — "
+        "a fresh clone will get a non-executable SessionStart hook."
+    )
 
 
 def test_schema_guard_rejects_garbage(tmp_path):
