@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "graphpowers"
-version = "0.1.1"
+version = "0.2.0"
 description = "Graph-aware Superpowers: wires graphify's knowledge graph into the Superpowers development methodology."
 readme = "README.md"
 requires-python = ">=3.9"
