@@ -39,8 +39,8 @@ class DriftReport:
             "removed_edge_count": len(self.removed_edges),
             "new_god_nodes": [
                 {"id": n, "label": after.label(n),
-                 "degree_before": before.degree.get(n, 0),
-                 "degree_after": after.degree.get(n, 0)}
+                 "impact_degree_before": before.impact_degree.get(n, 0),
+                 "impact_degree_after": after.impact_degree.get(n, 0)}
                 for n in self.new_god_nodes
             ],
             "new_cross_community_edges": [
@@ -132,8 +132,8 @@ def render_markdown(before: Graph, after: Graph, report: DriftReport,
     if report.new_god_nodes:
         lines.append("\n## New god nodes (centrality spiked)")
         for nid in report.new_god_nodes:
-            lines.append(f"- **{after.label(nid)}** — degree "
-                         f"{before.degree.get(nid, 0)} → {after.degree.get(nid, 0)} "
+            lines.append(f"- **{after.label(nid)}** — impact degree "
+                         f"{before.impact_degree.get(nid, 0)} → {after.impact_degree.get(nid, 0)} "
                          f"({after.location(nid)})")
         lines.append("\nA node this central deserves its own tests and docs. "
                      "Was this concentration intentional?")
