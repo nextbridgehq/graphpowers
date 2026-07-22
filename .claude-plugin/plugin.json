@@ -1,9 +1,32 @@
 {
   "name": "graphpowers",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Graph-aware Superpowers: wires graphify's knowledge graph into the Superpowers development methodology - blast-radius planning, context-pack subagent dispatch, graph-first debugging, impact-aware review, and architecture drift detection.",
   "author": {
     "name": "Nextbridge"
   },
   "hooks": "./hooks/hooks.json"
+  "license": "MIT",
+  "keywords": [
+    "graph",
+    "knowledge-graph",
+    "graphify",
+    "superpowers",
+    "blast-radius",
+    "impact-analysis",
+    "code-analysis",
+    "developer-tools",
+    "subagent",
+    "context-aware",
+    "debugging",
+    "code-review",
+    "architecture",
+    "drift-detection",
+    "dependency-graph",
+    "static-analysis",
+    "ai-agent",
+    "llm-tools",
+    "devtools",
+    "codebase-intelligence"
+  ]
 }
