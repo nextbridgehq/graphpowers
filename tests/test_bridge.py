@@ -213,6 +213,32 @@ def test_freshness(tmp_path):
     assert rep2.fresh
 
 
+def test_freshness_detects_untracked_new_file(tmp_path):
+    """A file that was just created but never `git add`ed must still be
+    seen — `git ls-files` alone omits it, which previously let a graph
+    with a real gap report FRESH."""
+    import os
+    root = tmp_path
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "t@example.com"],
+                   cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
+
+    (root / "graphify-out").mkdir()
+    gp = root / "graphify-out" / "graph.json"
+    gp.write_text(json.dumps(FIXTURE))
+    old = time.time() - 100
+    os.utime(gp, (old, old))
+
+    # never `git add`ed
+    new_file = root / "new_module.py"
+    new_file.write_text("print('new')")
+
+    rep = check_freshness(root)
+    assert not rep.fresh
+    assert "new_module.py" in rep.stale_files
+
+
 def test_who_uses():
     from bridge import lookup
     g = graph()
