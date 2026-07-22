@@ -3,9 +3,12 @@
 ![Version](https://img.shields.io/badge/version-v0.1.0-blue)
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-zero-success)
+[![Release Please](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml/badge.svg)](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/nextbridgehq/graphpowers/blob/main/LICENSE)
 
-Developed and open-sourced by [Nextbridge](https://www.nextbridge.com).
+[GitHub](https://github.com/nextbridgehq/graphpowers) · [Issues](https://github.com/nextbridgehq/graphpowers/issues) · [Releases](https://github.com/nextbridgehq/graphpowers/releases) · [Changelog](CHANGELOG.md)
+
+Maintained by [Nextbridge](https://nextbridge.com)
 
 ---
 
@@ -380,7 +383,7 @@ Risk classification:
 
 | Risk | Condition |
 | --- | --- |
-| HIGH | Any god node (top-10 by degree) is reachable |
+| HIGH | Any god node (top-10 by impact degree) is reachable |
 | MEDIUM | >40 nodes reachable OR >3 communities touched |
 | LOW | Everything else |
 Impact relations traversed:
@@ -469,7 +472,7 @@ What it detects:
 
 | Finding | What it means |
 | --- | --- |
-| New god node | A node's degree spiked — it became load-bearing |
+| New god node | A node's impact degree spiked — it became load-bearing |
 | Cross-community edge | Previously independent modules are now coupled |
 | Orphaned node | A node lost all its edges — dead code candidate |
 | Added/removed nodes | Context for the structural findings |
@@ -486,7 +489,7 @@ Output:
 **Verdict: REVIEW NEEDED ⚠️** — +1/-0 nodes, +5/-1 edges.
 
 ## New god nodes (centrality spiked)
-- **MegaHub** — degree 0 → 5 (src/hub.py)
+- **MegaHub** — impact degree 0 → 5 (src/hub.py)
 
 A node this central deserves its own tests and docs. Was this concentration intentional?
 
@@ -505,7 +508,7 @@ Finds all nodes connected to a named concept, grouped by relationship type. Esse
 | --- | --- |
 | 0 | Node found, consumers listed |
 | 1 | No matching node |
-Node matching: Exact match (case-insensitive) wins, then substring matches ordered by degree (most-connected first). Strips trailing () for function matching.
+Node matching: Exact match (case-insensitive) wins, then substring matches ordered by degree (most-connected first), then a source-file path match if nothing else matches. Strips trailing () for function matching.
 
 Example:
 
@@ -1067,18 +1070,42 @@ Clean → merge
 Flagged (e.g., "new cross-community edge: LoginHandler → RedisClient") → explain in PR description or fix
 Either way: drift verdict in PR, old snapshots pruned, map fresh for next branch
 ## Credits & Attribution
-Graphpowers is an orchestration layer that integrates with, extends, and is inspired by the following projects. Neither is bundled in this repository; both are runtime/companion dependencies.
+
+Graphpowers integrates with and is compatible with the following
+open-source projects. None are bundled, redistributed, or included in
+this repository. Full license texts are available in the
+[`licenses/`](licenses/) directory. For complete attribution and
+licensing details, see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ### Graphify
-Repository: https://github.com/Graphify-Labs/graphify
-Copyright: (c) 2026 Safi Shamsi
-License: MIT (see licenses/GRAPHIFY-LICENSE)
-Relationship: Graphpowers consumes the graphify-out/graph.json artifact Graphify produces and invokes the graphify CLI in its workflows. No Graphify source code is included in this repository.
+
+| | |
+|---|---|
+| **Repository** | https://github.com/Graphify-Labs/graphify |
+| **Copyright** | © 2026 Safi Shamsi |
+| **License** | MIT — [`licenses/GRAPHIFY-LICENSE`](licenses/GRAPHIFY-LICENSE) |
+
+Graphpowers consumes the `graphify-out/graph.json` artifact generated
+by Graphify and invokes the `graphify` CLI as part of its workflows.
+No Graphify source code is included, redistributed, or modified by
+this project.
+
 ### Superpowers
-Repository: https://github.com/obra/superpowers
-Copyright: (c) 2025 Jesse Vincent
-License: MIT (see licenses/SUPERPOWERS-LICENSE)
-Relationship: Graphpowers skills follow the Superpowers skill format and extend Superpowers skills by reference (e.g. superpowers:writing-plans). The session-start hook follows the Superpowers hook output convention. Skill texts in this repository are original; no Superpowers skill content is copied.
+
+| | |
+|---|---|
+| **Repository** | https://github.com/obra/superpowers |
+| **Copyright** | © 2025 Jesse Vincent |
+| **License** | MIT — [`licenses/SUPERPOWERS-LICENSE`](licenses/SUPERPOWERS-LICENSE) |
+
+Graphpowers adopts the Superpowers skill format and hook conventions
+for compatibility. Skills in this repository may reference Superpowers
+skills by name (e.g., `superpowers:writing-plans`) and follow the
+same session-start hook output convention. All skill content in this
+repository is original and independently authored; no Superpowers
+source code or skill content is copied or redistributed.
+
 ### How Credit Works in Practice
 - Every graphpowers skill that extends a Superpowers skill says so explicitly (e.g., "This skill extends superpowers:writing-plans")
 - The session hook mirrors the Superpowers hook output convention — documented, not copied
@@ -1088,8 +1115,4 @@ Relationship: Graphpowers skills follow the Superpowers skill format and extend 
 ## License
 [MIT](LICENSE) © [Nextbridge](https://nextbridge.com)
 
-Upstream attributions and license texts: THIRD_PARTY_NOTICES.md and licenses/.
-
-Built and maintained by **[Nextbridge](https://nextbridge.com)**
-
-[GitHub](https://github.com/nextbridgehq/graphpowers) · [Issues](https://github.com/nextbridgehq/graphpowers/issues)
+Built and maintained by **[Nextbridge](https://nextbridge.com)** — if Graphpowers improved the way you code, a ⭐ is appreciated.

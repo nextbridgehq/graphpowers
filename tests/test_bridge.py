@@ -1,10 +1,13 @@
 import copy
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 from bridge.graphio import Graph
 from bridge import blast_radius as br
@@ -53,6 +56,39 @@ def test_load_and_indexes():
     assert g.nodes_for_files(["src/auth.py"]) == ["auth.py", "login"]
     # suffix matching
     assert "query" in g.nodes_for_files(["db.py"])
+
+
+def test_god_nodes_ignore_structural_edges():
+    raw = {
+        "directed": False,
+        "nodes": [
+            {"id": "structural_hub", "label": "structural_hub",
+             "source_file": "src/hub.py", "community": 0},
+            {"id": "real_hub", "label": "real_hub",
+             "source_file": "src/real.py", "community": 0},
+        ] + [
+            {"id": f"leaf{i}", "label": f"leaf{i}",
+             "source_file": f"src/leaf{i}.py", "community": 0}
+            for i in range(6)
+        ],
+        "links": (
+            [{"source": "structural_hub", "target": f"leaf{i}",
+              "relation": "contains", "confidence": "EXTRACTED"}
+             for i in range(3)]
+            + [{"source": "real_hub", "target": f"leaf{i}",
+                "relation": "calls", "confidence": "EXTRACTED"}
+               for i in range(3, 6)]
+        ),
+    }
+    g = Graph.from_node_link(raw)
+    # raw degree can't tell them apart
+    assert g.degree["structural_hub"] == g.degree["real_hub"] == 3
+    # impact degree does
+    assert g.impact_degree["structural_hub"] == 0
+    assert g.impact_degree["real_hub"] == 3
+    gods = {nid for nid, _ in g.god_nodes(min_degree=2)}
+    assert "real_hub" in gods
+    assert "structural_hub" not in gods
 
 
 def test_blast_radius():
@@ -177,6 +213,32 @@ def test_freshness(tmp_path):
     assert rep2.fresh
 
 
+def test_freshness_detects_untracked_new_file(tmp_path):
+    """A file that was just created but never `git add`ed must still be
+    seen — `git ls-files` alone omits it, which previously let a graph
+    with a real gap report FRESH."""
+    import os
+    root = tmp_path
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "t@example.com"],
+                   cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
+
+    (root / "graphify-out").mkdir()
+    gp = root / "graphify-out" / "graph.json"
+    gp.write_text(json.dumps(FIXTURE))
+    old = time.time() - 100
+    os.utime(gp, (old, old))
+
+    # never `git add`ed
+    new_file = root / "new_module.py"
+    new_file.write_text("print('new')")
+
+    rep = check_freshness(root)
+    assert not rep.fresh
+    assert "new_module.py" in rep.stale_files
+
+
 def test_who_uses():
     from bridge import lookup
     g = graph()
@@ -194,6 +256,30 @@ def test_who_uses_no_match():
     rep = lookup.who_uses(g, "does_not_exist_xyz")
     assert rep.matched_node is None
     assert "No node matching" in lookup.render_markdown(g, rep)
+
+
+def test_who_uses_by_file_path():
+    from bridge import lookup
+    g = graph()
+    rep = lookup.who_uses(g, "src/db.py")
+    assert rep.matched_node in ("db.py", "query")
+
+
+def test_hooks_session_start_is_executable():
+    """hooks.json invokes this file directly (no `bash` wrapper), so the
+    git-tracked mode must be executable or a fresh POSIX clone can't run
+    it — checking the working-tree file's OS permission bit isn't enough,
+    since it can be executable locally while the committed index entry
+    (what a fresh clone actually gets) is still 100644."""
+    result = subprocess.run(
+        ["git", "ls-files", "-s", "hooks/session-start"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+    )
+    mode = result.stdout.split()[0]
+    assert mode == "100755", (
+        f"hooks/session-start is tracked with mode {mode}, not 100755 — "
+        "a fresh clone will get a non-executable SessionStart hook."
+    )
 
 
 def test_schema_guard_rejects_garbage(tmp_path):

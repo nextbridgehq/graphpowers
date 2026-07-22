@@ -21,8 +21,8 @@ structural changes.
   belongs to Superpowers. Graphpowers skills extend those skills by
   reference; they do not restate or replace them.
 - **Not a general graph toolkit.** `graphio.Graph` implements exactly
-  what the engines need (adjacency, degree, file index, BFS support) —
-  not a networkx substitute.
+  what the engines need (adjacency, degree, impact degree, file index,
+  BFS support) — not a networkx substitute.
 
 ## Core principles
 
@@ -82,4 +82,4 @@ rather than wrong answers. When graphify's export schema changes, bump
 
 | graphpowers | graph schema | validated against |
 |---|---|---|
-| 0.1.x | node-link-v1 | graphify test fixtures, July 2026 |
+| 0.1.x – 0.2.x | node-link-v1 | graphify test fixtures, July 2026 |

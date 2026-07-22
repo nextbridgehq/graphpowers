@@ -48,14 +48,28 @@ class FreshnessReport:
 
 
 def _git_tracked(root: Path) -> list[Path] | None:
-    try:
-        out = subprocess.run(["git", "ls-files"], cwd=root, text=True,
-                             capture_output=True, timeout=30, check=False)
-        if out.returncode != 0:
+    """Tracked files plus untracked-but-not-ignored files — a freshly
+    created source file has no git history yet, but it's still a file
+    the graph needs to know about. Mirrors the changed-file detection
+    already used in blast_radius.git_changed_files()."""
+    paths: list[str] = []
+    for cmd in (["git", "ls-files"],
+                ["git", "ls-files", "--others", "--exclude-standard"]):
+        try:
+            out = subprocess.run(cmd, cwd=root, text=True,
+                                 capture_output=True, timeout=30, check=False)
+            if out.returncode != 0:
+                return None
+            paths.extend(l for l in out.stdout.splitlines() if l.strip())
+        except (OSError, subprocess.TimeoutExpired):
             return None
-        return [root / l for l in out.stdout.splitlines() if l.strip()]
-    except (OSError, subprocess.TimeoutExpired):
-        return None
+    seen: set[str] = set()
+    uniq: list[Path] = []
+    for l in paths:
+        if l not in seen:
+            seen.add(l)
+            uniq.append(root / l)
+    return uniq
 
 
 def _walk(root: Path) -> list[Path]:

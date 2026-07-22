@@ -1,31 +1,39 @@
-# Third-party notices
+# Third-Party Notices
 
-Graphpowers is an orchestration layer that integrates with, extends, and
-is inspired by the following projects. Neither is bundled in this
-repository. Graphify is a companion tool whose output (graph.json)
-the bridge reads; Superpowers is a methodology whose skill format
-and conventions the skills follow.
-
----
+Graphpowers integrates with and is compatible with the following
+open-source projects. None of these projects are bundled,
+redistributed, or included in this repository. This document provides
+attribution and licensing information as required by their respective
+licenses.
 
 ## Graphify
 
-- Repository: https://github.com/Graphify-Labs/graphify
-- Copyright (c) 2026 Safi Shamsi
-- License: MIT (see `licenses/GRAPHIFY-LICENSE`)
-- Relationship: Graphpowers consumes the `graphify-out/graph.json`
-  artifact Graphify produces and invokes the `graphify` CLI in its
-  workflows. No Graphify source code is included in this repository.
+| | |
+|---|---|
+| **Repository** | https://github.com/Graphify-Labs/graphify |
+| **Copyright** | © 2026 Safi Shamsi |
+| **License** | MIT — see [`licenses/GRAPHIFY-LICENSE`](licenses/GRAPHIFY-LICENSE) |
 
----
+### Relationship
+
+Graphpowers consumes the `graphify-out/graph.json` artifact generated
+by Graphify and invokes the `graphify` CLI as part of its workflows.
+No Graphify source code is included, redistributed, or modified by
+this project.
 
 ## Superpowers
 
-- Repository: https://github.com/obra/superpowers
-- Copyright (c) 2025 Jesse Vincent
-- License: MIT (see `licenses/SUPERPOWERS-LICENSE`)
-- Relationship: Graphpowers skills follow the Superpowers skill format
-  and extend Superpowers skills by reference (e.g.
-  `superpowers:writing-plans`). The session-start hook follows the
-  Superpowers hook output convention. Skill texts in this repository
-  are original; no Superpowers skill content is copied.
+| | |
+|---|---|
+| **Repository** | https://github.com/obra/superpowers |
+| **Copyright** | © 2025 Jesse Vincent |
+| **License** | MIT — see [`licenses/SUPERPOWERS-LICENSE`](licenses/SUPERPOWERS-LICENSE) |
+
+### Relationship
+
+Graphpowers adopts the Superpowers skill format and hook conventions
+for compatibility. Skills in this repository may reference Superpowers
+skills by name (e.g., `superpowers:writing-plans`) and follow the
+same session-start hook output convention. All skill content in this
+repository is original and independently authored; no Superpowers
+source code or skill content is copied or redistributed.
