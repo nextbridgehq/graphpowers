@@ -6,7 +6,9 @@
 [![Release Please](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml/badge.svg)](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/nextbridgehq/graphpowers/blob/main/LICENSE)
 
-Developed and open-sourced by [Nextbridge](https://www.nextbridge.com).
+[GitHub](https://github.com/nextbridgehq/graphpowers) · [Issues](https://github.com/nextbridgehq/graphpowers/issues) · [Releases](https://github.com/nextbridgehq/graphpowers/releases) · [Changelog](CHANGELOG.md)
+
+Maintained by [Nextbridge](https://nextbridge.com)
 
 ---
 
@@ -1114,5 +1116,3 @@ source code or skill content is copied or redistributed.
 [MIT](LICENSE) © [Nextbridge](https://nextbridge.com)
 
 Built and maintained by **[Nextbridge](https://nextbridge.com)** — if Graphpowers improved the way you code, a ⭐ is appreciated.
-
-[GitHub](https://github.com/nextbridgehq/graphpowers) · [Issues](https://github.com/nextbridgehq/graphpowers/issues)
