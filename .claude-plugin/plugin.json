@@ -5,7 +5,7 @@
   "author": {
     "name": "Nextbridge"
   },
-  "hooks": "./hooks/hooks.json"
+  "hooks": "./hooks/hooks.json",
   "license": "MIT",
   "keywords": [
     "graph",

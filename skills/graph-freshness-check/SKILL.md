@@ -1,9 +1,9 @@
 ---
-name: keeping-the-graph-fresh
+name: graph-freshness-check
 description: Use after merging a branch, completing implementation work, or whenever the freshness check reports stale - updates the knowledge graph so every later skill works from the truth
 ---
 
-# Keeping the Graph Fresh
+# Graph Freshness Check
 
 ## Overview
 

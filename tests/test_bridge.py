@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 import subprocess
 import sys
 import time
@@ -578,11 +579,11 @@ def test_cli_exit_codes(tmp_path):
     from bridge.cli import main
     import json
     import os
-    
+
     (tmp_path / "graphify-out").mkdir()
     gp = tmp_path / "graphify-out" / "graph.json"
     gp.write_text(json.dumps(FIXTURE))
-    
+
     old_cwd = os.getcwd()
     os.chdir(tmp_path)
     try:
@@ -592,7 +593,7 @@ def test_cli_exit_codes(tmp_path):
         # freshness (fresh) -> 0
         os.utime(gp, None)
         assert main(["freshness", "--graph", str(gp)]) == 0
-        
+
         # freshness (stale) -> 2
         src = tmp_path / "app.py"
         src.write_text("print('hi')")
@@ -600,14 +601,103 @@ def test_cli_exit_codes(tmp_path):
 
         # guard (no creep) -> 0
         assert main(["guard", "--planned", "src/auth.py", "--touched", "src/auth.py", "--graph", str(gp)]) == 0
-        
+
         # guard (creep) -> 2
         assert main(["guard", "--planned", "src/auth.py", "--touched", "src/auth.py", "src/db.py", "--graph", str(gp)]) == 2
 
         # drift (clean) -> 0
         assert main(["drift", str(gp), str(gp)]) == 0
-        
+
         # test --explain-exit-code parsing
         assert main(["--explain-exit-code", "freshness", "--graph", str(gp)]) == 2
     finally:
         os.chdir(old_cwd)
+
+
+MANIFESTS = (
+    ".claude-plugin/plugin.json",
+    ".claude-plugin/marketplace.json",
+    "gemini-extension.json",
+)
+
+
+def test_agent_manifests_are_valid_json():
+    """These manifests are parsed by external tooling we can't run in CI
+    (Claude Code's plugin loader, Gemini CLI's extension loader). A syntax
+    error here ships a broken install and is invisible to every other
+    test in this file."""
+    for rel in MANIFESTS:
+        path = REPO_ROOT / rel
+        assert path.is_file(), f"{rel} is missing"
+        try:
+            json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"{rel} is not valid JSON: {exc}") from None
+
+
+def test_manifest_versions_match_pyproject():
+    """pyproject.toml, both agent manifests, and the release-please
+    manifest are bumped together by a single release PR. If they drift,
+    a user installing the Gemini extension and a user installing the
+    Claude plugin get different reported versions from the same commit."""
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'^version = "([^"]+)"', pyproject, re.MULTILINE)
+    assert match, "no top-level version found in pyproject.toml"
+    expected = match.group(1)
+
+    for rel in (".claude-plugin/plugin.json", "gemini-extension.json"):
+        data = json.loads((REPO_ROOT / rel).read_text(encoding="utf-8"))
+        assert data["version"] == expected, (
+            f"{rel} is at {data['version']}, pyproject.toml is at {expected}"
+        )
+
+    rp = json.loads(
+        (REPO_ROOT / ".release-please-manifest.json").read_text(encoding="utf-8")
+    )
+    assert rp["."] == expected, (
+        f".release-please-manifest.json is at {rp['.']}, "
+        f"pyproject.toml is at {expected}"
+    )
+
+
+def test_gemini_context_file_deliberately_absent():
+    """gemini-extension.json's contextFileName points at a file that does
+    not exist on purpose: Gemini CLI auto-loads a root GEMINI.md as
+    extension context by default, and this repo's GEMINI.md is
+    contributor-facing guidance (not appropriate to inject into every
+    end user's session). If a future edit makes this file exist, or
+    removes the field entirely, that silently re-enables the auto-load."""
+    data = json.loads(
+        (REPO_ROOT / "gemini-extension.json").read_text(encoding="utf-8")
+    )
+    context_file = data["contextFileName"]
+    assert not (REPO_ROOT / context_file).exists(), (
+        f"{context_file} now exists — gemini-extension.json's "
+        "contextFileName no longer suppresses GEMINI.md auto-load"
+    )
+
+
+def test_hooks_json_registers_session_start_for_both_agents():
+    """hooks/hooks.json is read from the same fixed path by Claude Code
+    and Gemini CLI, so one file has to satisfy both. The matcher must be
+    a match-all value (Gemini treats lifecycle matchers as exact strings,
+    so a regex alternation like "startup|resume|clear" silently matches
+    nothing there), and the command must resolve the extension root under
+    either harness's substitution token."""
+    data = json.loads(
+        (REPO_ROOT / "hooks" / "hooks.json").read_text(encoding="utf-8")
+    )
+    entries = data["hooks"]["SessionStart"]
+    assert entries, "no SessionStart registration"
+
+    matchers = [e.get("matcher", "") for e in entries]
+    assert all(m in ("", "*") for m in matchers), (
+        f"SessionStart matchers {matchers} are not match-all; Gemini CLI "
+        "compares lifecycle matchers as exact strings, not regexes."
+    )
+
+    commands = [h["command"] for e in entries for h in e["hooks"]]
+    joined = " ".join(commands)
+    assert "CLAUDE_PLUGIN_ROOT" in joined, "no Claude Code root resolution"
+    assert "extensionPath" in joined, "no Gemini CLI root resolution"
+    assert "hooks/session-start" in joined, "does not invoke the hook script"

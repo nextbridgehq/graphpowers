@@ -37,7 +37,7 @@ At the start of any coding task in a repo:
 | subagent dispatch | graph-context-packs | token-budgeted briefing instead of blind re-discovery |
 | systematic-debugging | graph-first-debugging | trace call paths instead of grepping |
 | code review | graph-impact-review | reviewer checklist from blast radius + god nodes |
-| verification / finishing branch | architecture-drift-check, keeping-the-graph-fresh | catch coupling creep, update the map |
+| verification / finishing branch | graph-drift-check, graph-freshness-check | catch coupling creep, update the map |
 
 ## Two tools, two jobs
 

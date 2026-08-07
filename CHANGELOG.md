@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Gemini CLI extension support: install with `gemini extensions install`,
+  sharing the same skills, session hook, and bridge as the Claude Code plugin.
+- This repo's own test suite now runs in CI on every push and pull
+  request.
+
+### Changed
+
+- The session hook now also fires on `compact`, not just session start/resume
+  — harmless since it only reads state.
+- Renamed 4 skills to a consistent `graph-` prefix: `architecture-drift-check`
+  → `graph-drift-check`, `component-blast-radius` →
+  `graph-component-blast-radius`, `catching-design-system-bypasses` →
+  `graph-design-system-bypass-check`, `keeping-the-graph-fresh` →
+  `graph-freshness-check`.
+
+### Fixed
+
+- Repaired invalid JSON in the Claude Code plugin manifest that could break
+  plugin installation.
+
 ## [0.2.0] - 2026-07-22
 
 ### Added

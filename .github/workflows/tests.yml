@@ -1,0 +1,24 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 3.9 enforces the documented floor (AGENTS.md: "supports Python
+        # 3.9+"); 3.12 catches anything that only works on the version
+        # developers happen to have installed locally.
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install pytest
+      - run: pytest tests/ -q

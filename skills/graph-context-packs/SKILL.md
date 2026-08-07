@@ -60,4 +60,4 @@ grep the whole repo."
 
 - Greenfield tasks with no existing nodes — a pack of irrelevant matches
   is worse than none
-- The graph is stale — fix that first (`keeping-the-graph-fresh`)
+- The graph is stale — fix that first (`graph-freshness-check`)

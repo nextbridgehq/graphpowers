@@ -1,7 +1,7 @@
 """Reverse-dependency lookup: who uses / renders / calls a named node?
 
-Powers the component-blast-radius and catching-design-system-bypasses skills:
-before touching a shared component, enumerate every consumer; when
+Powers the graph-component-blast-radius and graph-design-system-bypass-check
+skills: before touching a shared component, enumerate every consumer; when
 auditing a design system, list what renders the raw element vs the
 sanctioned component.
 """

@@ -2,9 +2,12 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|clear",
+        "matcher": "",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start\"" }
+          {
+            "type": "command",
+            "command": "for r in \"${CLAUDE_PLUGIN_ROOT}\" \"${extensionPath}\"; do if [ -x \"$r/hooks/session-start\" ]; then exec \"$r/hooks/session-start\"; fi; done"
+          }
         ]
       }
     ]

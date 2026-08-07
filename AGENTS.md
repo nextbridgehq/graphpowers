@@ -24,9 +24,11 @@ When updating `CHANGELOG.md`:
   [Unreleased]: https://github.com/nextbridgehq/graphpowers/compare/vX.Y.Z...HEAD
   [X.Y.Z]: https://github.com/nextbridgehq/graphpowers/compare/vPREV...vX.Y.Z
   ```
-- This repo's `release-please` workflow generates its own changelog
-  format on release PRs. When editing `CHANGELOG.md` by hand, use the
-  format above rather than release-please's default style.
+- `release-please-config.json` sets `skip-changelog: true`, so
+  `release-please` never writes to `CHANGELOG.md` — it only bumps
+  version files and tags releases. Moving `## [Unreleased]` to a dated
+  `## [X.Y.Z] - YYYY-MM-DD` section is always a manual step, done by
+  whoever cuts the release, in the format above.
 
 ## Commit conventions
 
@@ -62,11 +64,12 @@ When updating `CHANGELOG.md`:
 ## Version files are release-please-owned
 
 `pyproject.toml`'s `version`, `.claude-plugin/plugin.json`'s `version`,
-and `.release-please-manifest.json` are only ever updated by a
-`release-please`-generated release PR (see `release-please-config.json`
-for the `extra-files` wiring). Never hand-edit a version number in
-these files directly — doing so drifts them out of sync with each
-other and with what `release-please` computes from commit history.
+`gemini-extension.json`'s `version`, and `.release-please-manifest.json`
+are only ever updated by a `release-please`-generated release PR (see
+`release-please-config.json` for the `extra-files` wiring). Never
+hand-edit a version number in these files directly — doing so drifts
+them out of sync with each other and with what `release-please`
+computes from commit history.
 
 ## Graph relation semantics
 
@@ -88,6 +91,14 @@ freshness, drift, degree, reachable nodes. Judgment calls like "HIGH
 risk → require tests before merging" belong in the markdown skill
 files under `skills/`, not in `bridge/` code. Keep new logic on the
 correct side of that line.
+
+## Skill naming
+
+Every directory under `skills/` is prefixed `graph-`, with one exception:
+`using-graphpowers` (it already names the plugin directly; a `graph-` prefix
+would read as `graph-using-graphpowers`). A skill's frontmatter `name:` field
+must equal its directory name. The `SKILL.md` H1 heading is that name's
+title-case form (e.g. `graph-drift-check` → `# Graph Drift Check`).
 
 ## Testing conventions
 
@@ -122,12 +133,17 @@ subcommand must return codes that fit this contract — see the
 
 ## CI templates vs this repo's CI
 
-Files under `ci/` (e.g. `graphpowers-drift.yml`, `upstream-watch.yml`)
-are workflow *templates* this plugin ships for consumer repositories
-to adopt — they do not run as part of this repo's own CI. The only
-workflow that actually executes here is `.github/workflows/release-please.yml`.
-Don't "fix" `ci/` templates thinking they're broken pipelines for this
-repo.
+`ci/graphpowers-drift.yml` is a workflow *template* this plugin ships for
+consumer repositories to adopt — it does not run as part of this repo's
+own CI. `ci/upstream-watch.yml` is different: per its own header comment,
+it's this repo's own weekly canary, written to be copied to
+`.github/workflows/upstream-watch.yml` when publishing — it is not yet
+active there today. The workflows that actually execute here right now
+are `.github/workflows/release-please.yml` and
+`.github/workflows/tests.yml` (pytest on push to `main` and on every PR).
+Don't "fix" `ci/graphpowers-drift.yml` thinking it's a broken pipeline for
+this repo, and don't assume `ci/upstream-watch.yml` is inactive by design
+the same way — it's simply not wired up yet.
 
 ## Path matching
 

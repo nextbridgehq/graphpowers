@@ -1,9 +1,9 @@
 ---
-name: catching-design-system-bypasses
+name: graph-design-system-bypass-check
 description: Use when reviewing or writing frontend code in a repo with a design system and a knowledge graph - detects components that bypass the design system with raw elements or one-off styling, and routes new UI through sanctioned components
 ---
 
-# Catching Design System Bypasses
+# Graph Design System Bypass Check
 
 ## Overview
 
@@ -46,11 +46,11 @@ Before creating any element the design system covers:
   a healthy consumer — not from memory
 - If the sanctioned component genuinely can't do what you need, that's a
   design-system gap: extend the component (with its own
-  `component-blast-radius` check) rather than bypassing it locally
+  `graph-component-blast-radius` check) rather than bypassing it locally
 
 ### 4. Track drift over releases
 
-`architecture-drift-check` output doubles as a design-system monitor:
+`graph-drift-check` output doubles as a design-system monitor:
 new nodes with UI file paths that connect to raw primitives instead of
 the design-system community are bypass candidates. Flag them in the
 drift review.

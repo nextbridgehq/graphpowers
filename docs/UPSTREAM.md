@@ -1,7 +1,7 @@
 # Staying current with upstream
 
 Graphpowers vendors no Graphify or Superpowers code, so "integrating
-their updates" means verifying that five contracts still hold:
+their updates" means verifying that six contracts still hold:
 
 1. Graphify's graph.json schema (guarded at runtime by
    `graphio.validate_node_link`)
@@ -10,6 +10,8 @@ their updates" means verifying that five contracts still hold:
 3. The Superpowers skill names our skills extend by reference
 4. The Superpowers hook output convention our hook mirrors
 5. The plugin manifest format
+6. Gemini CLI's extension manifest format (`gemini-extension.json`) and
+   hook/matcher conventions (`hooks/hooks.json`)
 
 ## Tier 1 - Weekly canary (automated)
 
@@ -37,12 +39,18 @@ Red -> the PR itself documents what broke and against which version.
 
 ## Tier 3 - Human review of semantics
 
-Watch both repos' releases (GitHub Watch -> Releases). Automated checks
+Watch each of these repos' releases (GitHub Watch -> Releases). Automated checks
 catch structural breakage; they cannot catch semantic drift - e.g.
 Superpowers rewording a skill so our extensions give contradictory
 guidance, or Graphify redefining a confidence label. Skim each upstream
 changelog; if a referenced skill's guidance changed materially, update
 the corresponding graphpowers skill in the same PR that bumps the pin.
+
+Gemini CLI is watched the same way: it isn't in the Tier 1 automated
+canary (`ci/upstream-watch.yml` doesn't install or exercise a live Gemini
+CLI today), so a schema change to `gemini-extension.json` or `hooks.json`
+— a new required field, a changed matcher-matching rule — is only caught
+by skimming Gemini CLI's own release notes.
 
 ## What we deliberately do NOT do
 

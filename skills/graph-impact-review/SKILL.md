@@ -49,7 +49,7 @@ Checklist, in order:
 2. Every depth-1 hit NOT in the diff: open it, confirm the contract the
    change relies on still holds.
 3. Cross-community reach: is the coupling this change introduces
-   intentional? (If unclear → run `architecture-drift-check`.)
+   intentional? (If unclear → run `graph-drift-check`.)
 4. Only then read the diff line by line.
 
 ## Red Flags — STOP

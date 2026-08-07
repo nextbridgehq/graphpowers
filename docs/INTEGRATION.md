@@ -27,15 +27,15 @@ as usual; if they hit a bug, graph-first-debugging bounds the search.
 ## 4. Review (requesting/receiving-code-review + graph-impact-review)
 The blast radius rides along with the review request. The reviewer
 re-runs it independently, checks god nodes for test coverage, opens
-depth-1 hits outside the diff. For UI work, `component-blast-radius` and `catching-design-system-bypasses` skills extend this same discipline to frontend reviews.
+depth-1 hits outside the diff. For UI work, `graph-component-blast-radius` and `graph-design-system-bypass-check` skills extend this same discipline to frontend reviews.
 
-## 5. Finish (finishing-a-development-branch + architecture-drift-check)
+## 5. Finish (finishing-a-development-branch + graph-drift-check)
 After verification-before-completion passes:
 `graphify . --update` then
 `python3 -m bridge drift graphify-out/graph.snapshot-*.json graphify-out/graph.json`.
 Clean -> merge. Flagged -> explain or fix. Either way the drift verdict
 goes in the PR description, old snapshots are pruned
-(keeping-the-graph-fresh), and the map is current for the next branch.
+(graph-freshness-check), and the map is current for the next branch.
 
 ## Exit-code contract
 All bridge commands: 0 = fine, 1 = error, 2 = needs attention

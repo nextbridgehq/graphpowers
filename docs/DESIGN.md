@@ -11,6 +11,8 @@ structural changes.
 2. Turn graph data into *decisions*, not just information: risk levels,
    parallel-safety flags, gate exit codes.
 3. Stay installable in seconds and runnable with nothing but Python.
+4. Support multiple agent platforms (Claude Code, Gemini CLI today) from
+   one shared `skills/`/`bridge/` tree — no per-platform fork.
 
 ## Non-goals
 
@@ -55,6 +57,15 @@ agent what to do; it produces facts (radius, freshness, drift). The
 skills own the judgment ("HIGH risk → tests before modification"). This
 split keeps the code testable and the methodology editable in markdown.
 
+**One file, host-resolved.** `hooks/hooks.json` can be pointed at from
+the same relative path by both Claude Code and Gemini CLI, so it needn't
+be forked per agent.
+Its command is a shell loop that tries `${CLAUDE_PLUGIN_ROOT}` then
+`${extensionPath}` and runs whichever resolves to an executable
+`hooks/session-start` — one file, host-resolved, instead of duplicated
+per platform. Same principle as multi-platform support in general,
+applied at the file level.
+
 ## Extension strategy
 
 - **Stable surface** (safe to build on): the CLI commands and their
@@ -68,7 +79,8 @@ split keeps the code testable and the methodology editable in markdown.
   real provider lands — not before.
 - **Adding a skill**: follow the Superpowers skill format; extend an
   existing Superpowers or Graphpowers skill by reference; include a
-  Red Flags section; keep commands copy-pasteable.
+  Red Flags section; keep commands copy-pasteable; name it `graph-<x>`
+  per `AGENTS.md`'s naming convention.
 
 ## Compatibility
 

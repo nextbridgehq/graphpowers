@@ -82,6 +82,17 @@ And false negatives if files are modified with preserved timestamps
 When in doubt, `graphify . --update` is cheap (incremental) and
 eliminates uncertainty.
 
+## Session Hook on Windows
+
+Gemini CLI on native Windows unconditionally executes hook commands via
+PowerShell, with no bash fallback or override — so the SessionStart hook
+(`hooks/session-start`, a bash script) cannot fire there, regardless of
+what else is installed. Claude Code has a milder version of the same
+underlying constraint (it also expects a bash-capable shell to run the
+script), but isn't hardcoded to PowerShell the way Gemini CLI is, so a
+Windows setup with Git Bash on PATH may already work there. WSL or
+Git-Bash-based setups are unaffected under either agent.
+
 ## Approximate Token Budgets
 
 Context pack `--budget` uses a character-based estimate (~4 chars per

@@ -1,6 +1,6 @@
 # Graphpowers
 
-![Version](https://img.shields.io/badge/version-v0.1.0-blue)
+![Version](https://img.shields.io/badge/version-v0.2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-zero-success)
 [![Release Please](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml/badge.svg)](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml)
@@ -63,6 +63,14 @@ Maintained by [Nextbridge](https://nextbridge.com)
 /plugin install graphpowers
 ```
 This installs skills, hooks, and the bridge together.
+
+### Method 1b: Gemini CLI Extension (Tier 3)
+```bash
+gemini extensions install https://github.com/nextbridgehq/graphpowers.git
+```
+This installs the same skills, hooks, and bridge as the Claude Code plugin — Gemini CLI discovers `skills/*/SKILL.md` and `hooks/hooks.json` from the cloned extension directory. Restart the CLI after installing; extension changes only take effect on a new session.
+
+`gemini-extension.json` sets `contextFileName` to a file that doesn't exist, which prevents Gemini CLI from auto-loading this repo's `GEMINI.md` (contributor-facing guidance, not end-user context) into every session.
 
 ### Method 2: pip Install (Tier 1–2)
 ```bash
@@ -764,13 +772,13 @@ Graphpowers includes 11 skills that extend the Superpowers methodology with grap
 | graph-context-packs | superpowers:subagent-driven-development | Dispatching subagents | Token-budgeted briefings so subagents start oriented |
 | graph-first-debugging | superpowers:systematic-debugging | Root-cause phase | Call-path tracing; change-blast suspect lists |
 | graph-impact-review | superpowers:requesting-code-review | Code review | Reviewer checklist from blast radius + god nodes |
-| architecture-drift-check | superpowers:finishing-a-development-branch | Finishing a branch | Diff before/after: coupling creep, new god nodes, orphans |
-| keeping-the-graph-fresh | — | After merges, when stale | Never plan against a lie; update the map when the code changes |
+| graph-drift-check | superpowers:finishing-a-development-branch | Finishing a branch | Diff before/after: coupling creep, new god nodes, orphans |
+| graph-freshness-check | — | After merges, when stale | Never plan against a lie; update the map when the code changes |
 ### Specialized Skills
 | Skill | When to Use | What It Adds |
 | --- | --- | --- |
-| component-blast-radius | Before modifying shared UI components | Enumerates every consumer of a component before you touch it |
-| catching-design-system-bypasses | Frontend code review | Detects design-system bypasses via graph adoption patterns |
+| graph-component-blast-radius | Before modifying shared UI components | Enumerates every consumer of a component before you touch it |
+| graph-design-system-bypass-check | Frontend code review | Detects design-system bypasses via graph adoption patterns |
 | graph-first-testing | Deciding test coverage priorities | Test type (integration/contract/unit/boundary) from graph position |
 ### How Skills Plug Into the Superpowers Loop
 ```text
@@ -783,15 +791,15 @@ Graphpowers includes 11 skills that extend the Superpowers methodology with grap
 │  systematic-debugging     →  graph-first-debugging              │
 │  requesting-code-review   →  graph-impact-review                │
 │  test-driven-development  →  graph-first-testing                │
-│  finishing-a-branch       →  architecture-drift-check           │
-│  (always)                 →  keeping-the-graph-fresh            │
+│  finishing-a-branch       →  graph-drift-check                  │
+│  (always)                 →  graph-freshness-check              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 ### Reading Skills Without Superpowers
 Even without the full Tier 3 setup, skills are useful as documentation:
 
 graph-first-planning/SKILL.md tells you what blast output means for task ordering
-architecture-drift-check/SKILL.md explains how to read a drift report
+graph-drift-check/SKILL.md explains how to read a drift report
 graph-first-testing/SKILL.md maps graph position to test types
 ## CI Integration
 ### Architecture Drift Gate
@@ -826,13 +834,26 @@ Copy ci/upstream-watch.yml to .github/workflows/. Runs every Monday:
 - On failure: opens/updates a GitHub issue labeled upstream-watch
 This catches upstream breaking changes automatically — see docs/UPSTREAM.md for the full response process.
 
-## Session Hook
-The hooks/session-start script fires on every Claude Code session start/resume (Tier 3 only). It:
+### This Repo's Own CI
+The Architecture Drift Gate above is a template this plugin ships for
+*consumer* repos to adopt. Upstream Watch is different: it's this repo's
+own weekly canary — written to be copied into `.github/workflows/` when
+publishing, not yet active there today. Separately, this repo's own
+`.github/workflows/tests.yml` runs `pytest tests/` on every push to `main`
+and every pull request, against both Python 3.9 (the documented floor)
+and 3.12 — that's what actually protects graphpowers' own manifests,
+hooks, and bridge code.
 
-- Checks if graphify-out/graph.json exists in the current directory
+## Session Hook
+The hooks/session-start script fires on every Claude Code or Gemini CLI session start/resume (Tier 3 only; requires a POSIX shell to execute the hook script — see [Known Limitations](KNOWN_LIMITATIONS.md) for the native-Windows caveat). It:
+
+- Checks if graphify is installed
+- If not: reports that graphify needs to be installed to build a knowledge graph
+- Else, checks if graphify-out/graph.json exists in the current directory
 - If yes: runs bridge freshness and reports the status
+- If no: reports that no graph exists yet and how to build one
 - Injects the using-graphpowers skill as context
-- Outputs in the correct format for Claude Code or Superpowers
+- Outputs in the correct format for Claude Code, Gemini CLI, or Cursor
 What the agent sees at session start:
 
 > Graph status: Graph is FRESH (142 source files checked against graphify-out/graph.json).
@@ -840,18 +861,23 @@ What the agent sees at session start:
 > Below is your 'graphpowers:using-graphpowers' skill — how the knowledge graph plugs into your development process...
 Or if no graph exists:
 
-> Graph status: No graphify-out/graph.json in this directory — offer to build one for non-trivial work.
+> Graph status: graphify is installed but no graph exists for this repo. Run 'graphify .' to build one.
 ### Hook Registration
-Registered via hooks/hooks.json:
+Registered via hooks/hooks.json. Both Claude Code and Gemini CLI read hook
+registration from this same fixed path, so one entry serves both — the loop
+resolves whichever extension-root variable the host harness provides:
 
 ```json
 {
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|clear",
+        "matcher": "",
         "hooks": [
-          { "type": "command", "command": ""${CLAUDE_PLUGIN_ROOT}/hooks/session-start"" }
+          {
+            "type": "command",
+            "command": "for r in \"${CLAUDE_PLUGIN_ROOT}\" \"${extensionPath}\"; do if [ -x \"$r/hooks/session-start\" ]; then exec \"$r/hooks/session-start\"; fi; done"
+          }
         ]
       }
     ]

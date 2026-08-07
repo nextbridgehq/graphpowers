@@ -67,7 +67,7 @@ python3 -m bridge snapshot
 ```
 
 Record the snapshot filename in the plan header. The
-`architecture-drift-check` skill diffs against it when the branch is done.
+`graph-drift-check` skill diffs against it when the branch is done.
 
 ## Plan task template addition
 

@@ -4,15 +4,22 @@
   "packages": {
     ".": {
       "release-type": "python",
-      
+      "skip-changelog": true,
+
       "exclude-paths": [
-        ".claude-plugin/**"
+        ".claude-plugin/**",
+        "gemini-extension.json"
       ],
-      
+
       "extra-files": [
         {
           "type": "json",
           "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "gemini-extension.json",
           "jsonpath": "$.version"
         },
         {

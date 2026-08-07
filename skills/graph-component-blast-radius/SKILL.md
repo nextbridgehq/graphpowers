@@ -1,9 +1,9 @@
 ---
-name: component-blast-radius
+name: graph-component-blast-radius
 description: Use before modifying any shared UI component (props, markup, styling, behavior) in a repo with a knowledge graph - enumerates every screen and component that consumes it so visual regressions are checked where they will actually appear
 ---
 
-# Component Blast Radius
+# Graph Component Blast Radius
 
 ## Overview
 

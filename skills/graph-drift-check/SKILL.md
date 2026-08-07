@@ -1,9 +1,9 @@
 ---
-name: architecture-drift-check
+name: graph-drift-check
 description: Use when finishing a development branch, after tests pass and before merge - rebuilds the graph and diffs it against the pre-implementation snapshot to catch coupling creep, accidental god nodes, and orphaned code that line-by-line review misses
 ---
 
-# Architecture Drift Check
+# Graph Drift Check
 
 ## Overview
 
