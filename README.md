@@ -1,6 +1,6 @@
 # Graphpowers
 
-![Version](https://img.shields.io/badge/version-v0.2.0-blue)
+![Version](https://img.shields.io/badge/version-v0.2.0-blue) <!-- x-release-please-version -->
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-zero-success)
 [![Release Please](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml/badge.svg)](https://github.com/nextbridgehq/graphpowers/actions/workflows/release-please.yml)
