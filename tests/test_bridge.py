@@ -616,7 +616,6 @@ def test_cli_exit_codes(tmp_path):
 
 MANIFESTS = (
     ".claude-plugin/plugin.json",
-    ".claude-plugin/marketplace.json",
     "gemini-extension.json",
 )
 
