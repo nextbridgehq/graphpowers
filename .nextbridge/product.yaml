@@ -1,0 +1,95 @@
+schema: nextbridge.dev/product/v1
+
+id: graphpowers
+name: GraphPowers
+
+description:
+  short: >-
+    Bridges a Graphify knowledge graph into agent development workflows:
+    blast radius, context packs, drift, and graph-first debugging.
+  long: >-
+    A zero-dependency Python bridge plus eleven Claude Code skills that make an
+    existing code graph usable during real work. It computes the blast radius of
+    a change by bidirectional traversal, renders token-budgeted context packs for
+    subagents, answers reverse-dependency questions, diffs two graph snapshots to
+    surface architecture drift, checks whether the graph is still current, and
+    flags scope creep by comparing touched files against the planned set. It reads
+    graph.json directly rather than importing the tool that produced it, so a
+    schema change fails loudly instead of quietly misleading a plan.
+
+problem: >-
+  A coding agent plans, debugs, and reviews from whatever files it happened to
+  read, with no view of what a change actually reaches, so blast radius is
+  guessed and architectural drift is noticed only after it ships.
+
+user:
+  - ai-agent-developer
+  - developer-using-ai-agent
+
+capabilities:
+  core:
+    - graph-impact-analysis
+    - context-selection
+    - token-budgeting
+    - architecture-drift-detection
+    - agent-process-guidance
+  secondary:
+    - git-scoping
+
+interfaces:
+  - type: cli
+    command: graphpowers
+    summary: >-
+      Thirteen subcommands over an existing graph.json - freshness, blast, pack,
+      drift, who-uses, upstream-check, snapshot, guard, narrate, parallel,
+      explain, pack-feedback, doctor. Installed from the repository; the console
+      script is declared in pyproject.toml but the package is not published.
+
+distribution:
+  - channel: github
+    repository: nextbridgehq/graphpowers
+  - channel: gemini-cli-extension
+    repository: nextbridgehq/graphpowers
+
+runtime:
+  language: python
+  python: ">=3.9"
+
+license: MIT
+
+maturity: stable
+
+plugins:
+  - name: graphpowers
+    host: claude-code
+    path: .
+    manifest: .claude-plugin/plugin.json
+    marketplace: nextbridge
+    components:
+      skills: 11
+      agents: 0
+      commands: 0
+      hooks: true
+      mcp: false
+    status: published
+
+integrations:
+  # Graphify produces the graph; this product only reads it, via the node-link
+  # graph.json contract, without importing graphify. Not "verified": the canary
+  # that would exercise a real graphify install lives at ci/upstream-watch.yml
+  # and is not installed under .github/workflows, so nothing runs it.
+  - to: graphify
+    external: true
+    type: graph-consumer
+    interface: file
+    status: supported
+    contract:
+      consumes: graphify-out/graph.json (networkx node-link, schema node-link-v1)
+
+  # The skills extend the Superpowers methodology and reference its skills by
+  # name. `upstream-check` verifies those references, but only when run.
+  - to: superpowers
+    external: true
+    type: methodology-extension
+    interface: plugin
+    status: supported
